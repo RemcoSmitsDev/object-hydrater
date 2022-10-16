@@ -1,0 +1,38 @@
+{
+  "name": "remcosmits/hydrate",
+  "description": "Hydrate array in to class",
+  "require-dev": {
+    "squizlabs/php_codesniffer": "^3.7",
+    "phpunit/phpunit": "^9.5",
+    "phpstan/phpstan": "^1.8",
+    "symfony/var-dumper": "^5.4"
+  },
+  "license": "MIT",
+  "scripts": {
+    "phpunit": "vendor/bin/phpunit",
+    "coverage": "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html html",
+    "phpcs": "vendor/bin/phpcs",
+    "phpcbf": "vendor/bin/phpcbf",
+    "phpstan": "vendor/bin/phpstan analyse src tests --level=max"
+  },
+  "autoload": {
+    "psr-4": {
+      "RemcoSmits\\Hydrate\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "RemcoSmits\\Hydrate\\Tests\\": "tests/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Remco Smits",
+      "email": "djsmits12@gmail.com"
+    }
+  ],
+  "require": {
+    "phpdocumentor/type-resolver": "^1.6",
+    "ext-json": "*"
+  }
+}
