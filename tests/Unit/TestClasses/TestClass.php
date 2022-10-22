@@ -40,6 +40,8 @@ class TestClass
     /** @var ArrayIterator<string> */
     public ArrayIterator $array_iterator_strings;
 
+    public $without_any_type;
+
     /** @return Collection<SubClass> */
     public function getCollection(): Collection
     {

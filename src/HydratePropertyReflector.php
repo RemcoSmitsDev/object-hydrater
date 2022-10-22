@@ -9,6 +9,7 @@ use phpDocumentor\Reflection\Types\ContextFactory;
 use ReflectionException;
 use RemcoSmits\Hydrate\Exception\AbstractHydrateException;
 use RemcoSmits\Hydrate\Exception\ClassDoesntExistsException;
+use RemcoSmits\Hydrate\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\Exception\HydrateFailedException;
 use RemcoSmits\Hydrate\Exception\InvalidDataTypeException;
 use RemcoSmits\Hydrate\Exception\ValueWasNotFoundException;
@@ -182,18 +183,18 @@ final class HydratePropertyReflector
 
         $collectionItemType = $this->property->getPropertyType()->getCollectionItemType();
 
-        foreach ($value as $item) {
+        foreach ($value as $key => $item) {
             // when is array<int>|array<string>|string[]|int[]|Collection<int>|Collection<string>
             // format item to string|int
             if (in_array($collectionItemType, PropertyType::BUILD_IN_TYPES, true)) {
-                $array[] = $this->getValueWithCorrectType($this->property->getPropertyType(), $item);
+                $array[$key] = $this->getValueWithCorrectType($this->property->getPropertyType(), $item);
 
                 continue;
             }
 
             $this->throwWhenIsNotAnArray($item);
 
-            $array[] = Hydrater::to($fqn, $item);
+            $array[$key] = Hydrater::to($fqn, $item);
         }
 
         return $array;
@@ -212,8 +213,11 @@ final class HydratePropertyReflector
     }
 
     /**
+     * @param HydrateReflectionProperty $property
+     *
      * @return class-string
      *
+     * @throws FailedToParseDocblockToTypeException
      * @throws ReflectionException
      */
     private function findFqn(HydrateReflectionProperty $property): string

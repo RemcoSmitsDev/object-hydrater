@@ -7,6 +7,7 @@ namespace RemcoSmits\Hydrate\Reflection;
 use ReflectionException;
 use ReflectionProperty;
 use RemcoSmits\Hydrate\DocblockParser;
+use RemcoSmits\Hydrate\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\PropertyType;
 
 final class HydrateReflectionProperty
@@ -22,21 +23,21 @@ final class HydrateReflectionProperty
 
     private bool $isStatic;
 
-    private bool $isDefault;
-
     private ?bool $isInitialized = null;
 
     private string $declaringClass;
 
     private ?ReflectionProperty $property;
 
-    /** @throws ReflectionException */
+    /**
+     * @throws ReflectionException
+     * @throws FailedToParseDocblockToTypeException
+     */
     public function __construct(ReflectionProperty $property)
     {
         $this->property = $property;
         $this->name = $property->getName();
         $this->isStatic = $property->isStatic();
-        $this->isDefault = $property->isDefault();
 
         if ($property->hasType()) {
             $this->nativeType = new HydrateReflectionNamedType($property->getType());
@@ -53,7 +54,10 @@ final class HydrateReflectionProperty
         return $this->nativeType;
     }
 
-    /** @throws ReflectionException */
+    /**
+     * @throws ReflectionException
+     * @throws FailedToParseDocblockToTypeException
+     */
     public function getPropertyType(): PropertyType
     {
         if (isset($this->propertyType)) {
@@ -100,11 +104,6 @@ final class HydrateReflectionProperty
         return $this->isStatic;
     }
 
-    public function isDefault(): bool
-    {
-        return $this->isDefault;
-    }
-
     /** @throws ReflectionException */
     public function isInitialized(?object $object = null): bool
     {
@@ -148,7 +147,6 @@ final class HydrateReflectionProperty
             'nativeType',
             'docblock',
             'isStatic',
-            'isDefault',
             'isInitialized',
             'declaringClass',
             'propertyType'

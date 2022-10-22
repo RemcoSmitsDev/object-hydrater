@@ -7,6 +7,7 @@ namespace RemcoSmits\Hydrate;
 use ReflectionException;
 use RemcoSmits\Hydrate\Exception\AbstractHydrateException;
 use RemcoSmits\Hydrate\Exception\ClassDoesntExistsException;
+use RemcoSmits\Hydrate\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\Exception\HydrateFailedException;
 use RemcoSmits\Hydrate\Exception\InvalidDataTypeException;
 use RemcoSmits\Hydrate\Exception\ValueWasNotFoundException;
@@ -84,18 +85,17 @@ final class HydrateClassReflector
         return $this;
     }
 
-    /** @throws ReflectionException */
+    /**
+     * @throws ReflectionException
+     * @throws FailedToParseDocblockToTypeException
+     */
     private function needToThrowWhenValueIsNotFound(HydrateReflectionProperty $property): bool
     {
         if ($property->isInitialized($this->getClassInstance())) {
             return false;
         }
 
-        if ($property->getType() === null) {
-            return true;
-        }
-
-        return $property->getType()->allowsNull() === false;
+        return $property->getPropertyType()->allowsNull() === false;
     }
 
     /**
