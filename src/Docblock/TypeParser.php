@@ -153,7 +153,7 @@ final class TypeParser
         if (preg_match(self::COLLECTION_TYPES_REGEX[0], $collectionType, $match) === 1) {
             return new CollectionType(
                 'array',
-                [new StringType(), new IntType()],
+                [new IntType(), new StringType()],
                 self::parse($match['collectionItemTypeName'])
             );
         }
@@ -162,7 +162,7 @@ final class TypeParser
         if (preg_match(self::COLLECTION_TYPES_REGEX[1], $collectionType, $match) === 1) {
             return new CollectionType(
                 $match['collectionTypeName'],
-                [new StringType(), new IntType()],
+                [new IntType(), new StringType()],
                 self::parse($match['collectionItemTypeName'])
             );
         }

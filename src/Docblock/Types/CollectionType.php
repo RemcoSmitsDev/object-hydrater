@@ -6,17 +6,16 @@ namespace RemcoSmits\Hydrate\Docblock\Types;
 
 class CollectionType extends AbstractType
 {
+    /** @var array<int, StringType|IntType> */
     private array $collectionKeyTypes;
 
     private string $collectionTypeName;
 
     private ?AbstractType $subType;
 
-    public function __construct(
-        string $collectionTypeName,
-        array $collectionKeyTypes,
-        ?AbstractType $subType = null
-    ) {
+    /** @param array<int, StringType|IntType> $collectionKeyTypes */
+    public function __construct(string $collectionTypeName, array $collectionKeyTypes, ?AbstractType $subType = null)
+    {
         $this->collectionKeyTypes = $collectionKeyTypes;
 
         $this->collectionTypeName = $collectionTypeName;
@@ -28,7 +27,7 @@ class CollectionType extends AbstractType
         return $this->collectionTypeName;
     }
 
-    /** @return AbstractType[] */
+    /** @return array<int, StringType|IntType> */
     public function getCollectionKeyTypes(): array
     {
         return $this->collectionKeyTypes;

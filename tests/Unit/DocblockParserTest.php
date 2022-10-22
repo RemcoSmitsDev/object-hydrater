@@ -224,6 +224,11 @@ class DocblockParserTest extends TestCase
         assert($types[2] instanceof CollectionType);
         $this->assertInstanceOf(MixedType::class, $types[2]->getSubType());
 
-        dd($types[2]);
+        $this->assertCount(2, $types[2]->getCollectionKeyTypes());
+        $this->assertIsArray($types[2]->getCollectionKeyTypes());
+        $this->assertInstanceOf(IntType::class, $types[2]->getCollectionKeyTypes()[0]);
+        $this->assertInstanceOf(StringType::class, $types[2]->getCollectionKeyTypes()[1]);
+
+        dd($types[3]);
     }
 }
