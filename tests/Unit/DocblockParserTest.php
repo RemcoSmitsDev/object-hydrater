@@ -23,8 +23,11 @@ class DocblockParserTest extends TestCase
         $typeString = 'string|null|mixed[]|Collection<string>|array<string>|array<int, string>|array<int, (string|int)>|array<int, array{remco: string|int, testing: string|int, a: string, "1": mixed, "1.1": mixed, array: array{age: int, name: string, hobbies: array{0: string, 1: string}}}>';
         $typeString = 'array<int, array1{remco: string|int, normal: array2{t: string, a: array{h: string, t: mixed}}, a: string, 1: mixed, array: array3{age: int, name: string, hobbies: array4{0: string, 1?: string|int}}}>';
 //        $typeString = 'array1<int, array2{remco: string|int, normal: array3{t: string, a: array{remco: string, smits: string}}, a: string, geen: array{groen: int, aarde: string}}>';
+//        $typeString = 'array1<int, array2{1: array3{2: array{remco: string, smits: string}}, a: string, geen: array{aarde: string}}>';
 
         $response = TypeParser::parse($typeString);
+
+//        dd($response);
 
         $this->assertInstanceOf(CollectionType::class, $response);
         assert($response instanceof CollectionType);

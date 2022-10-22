@@ -168,7 +168,9 @@ final class TypeParser
 
         // array<int, array{remco: string|int, testing: string|int}> or array{remco: string|int, testing: string|int}
         try {
-            return self::formatShapedArrayType($collectionType);
+            $types = self::splitNestedCollectionTypes($collectionType);
+
+            return self::formatShapedArrayType($types);
         } catch (Throwable $throwable) {
             dd($throwable);
             throw new FailedToParseDocblockToTypeException(
@@ -247,104 +249,63 @@ final class TypeParser
     /**
      * @throws FailedToParseDocblockToTypeException
      */
-    private static function formatShapedArrayType(string $typeString, ?array $types = null): AbstractType
+    private static function formatShapedArrayType(array &$types): AbstractType
     {
-        $types ??= self::splitNestedCollectionTypes($typeString);
-
-        $collectionClass = null;
-
         $r = '/([A-z0-9\.\-_]+)(\?*)\:\s(?:([A-z\|]+)|---child-collection-([0-9]+)---)/';
         $r2 = '/([A-z\|]+)\,\s(?:([A-z\|]+)|---child-collection-([0-9]+)---)/';
 
-        foreach ($types as $key => $type) {
-            if (preg_match_all($r, $type, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
-                $shapes = new ShapedCollectionType(
-                    preg_replace('/^([A-z0-9]+)\{.*/', '$1', $type)
-                );
+        // array1<int, array2{1: array3{2: array{remco: string, smits: string}}, a: string, geen: array{aarde: string}}>
+        $currentType = array_shift($types);
 
-                unset($types[$key]);
+        if (preg_match_all($r, $currentType, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
+            $collectionClass = new ShapedCollectionType(
+                preg_replace('/^([A-z0-9]+)\{.*/', '$1', $currentType),
+            );
 
-                foreach ($match[1] as $_key => $arrayKey) {
-                    if (is_numeric($match[4][$_key])) {
-                        $nextType = $types[((int)$match[4][$_key]) + 1];
-                        
-                        $shapes->appendShape(
-                            new ShapedCollectionItem(
-                                $arrayKey,
-                                $match[2][$_key] === '?',
-                                self::formatShapedArrayType(
-                                    $nextType,
-                                    $types
-                                )
-                            )
-                        );
-                    } else {
-                        $shapes->appendShape(
-                            new ShapedCollectionItem($arrayKey, $match[2][$_key] === '?', self::parse($match[3][$_key]))
-                        );
-                    }
-                }
+            foreach ($match[1] as $_key => $arrayKey) {
+                $isOptional = $match[2][$_key] === '?';
 
-                if ($collectionClass === null) {
-                    $collectionClass = $shapes;
-                } elseif ($collectionClass instanceof CollectionType) {
-                    if ($collectionClass->getSubType() === null) {
-                        $collectionClass->setSubType($shapes);
-                    } else {
-                        //
-                    }
-                } elseif ($collectionClass instanceof ShapedCollectionType) {
-//                    $collectionClass->appendShape(
-//                        new ShapedCollectionItem(
-//                            'aasdfasdfkjsal',
-//                            false,
-//                            $shapes
-//                        )
-//                    );
-
-                }
-            } elseif (preg_match($r2, $type, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
-                unset($types[$key]);
-
-                $collection = new CollectionType(
-                    preg_replace('/^([A-z0-9]+)\<.*/', '$1', $type),
-                    ['int'],
-                    []
-                );
-
-                $collection->setSubType(
-                    is_numeric($match[3]) ? self::formatShapedArrayType(
-                        $types[((int)$match[3]) + 1],
-                        $types
-                    ) : self::parse(
-                        $match[1] ?? 'failed'
-                    )
-                );
-
-                if ($collectionClass === null) {
-//                    dd('fail', $collection);
-                    $collectionClass = $collection;
-                } elseif ($collectionClass instanceof ShapedCollectionType) {
+                if (is_numeric($match[4][$_key])) {
                     $collectionClass->appendShape(
                         new ShapedCollectionItem(
-                            'testing',
-                            false,
-                            $collection
+                            $arrayKey,
+                            $isOptional,
+                            self::formatShapedArrayType($types)
                         )
                     );
                 } else {
-                    dd('asdfjalsdfjkl');
+                    $collectionClass->appendShape(
+                        new ShapedCollectionItem($arrayKey, $isOptional, self::parse($match[3][$_key]))
+                    );
                 }
             }
+
+            return $collectionClass;
         }
 
-        return $collectionClass;
+        if (preg_match($r2, $currentType, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
+            $collectionClass = new CollectionType(
+                preg_replace('/^([A-z0-9]+)\<.*/', '$1', $currentType),
+                ['int'],
+                []
+            );
+
+            $collectionClass->setSubType(
+                is_numeric($match[3]) ? self::formatShapedArrayType($types) : self::parse($match[1] ?? 'failed')
+            );
+
+            return $collectionClass;
+        }
+
+        throw new FailedToParseDocblockToTypeException('failed to match something');
     }
 
     private static function splitNestedCollectionTypes(string $typeString): array
     {
         $types = [];
         $refKey = 0;
+
+        $childArrKey = -1;
 
         preg_match_all(self::generateRegexp(), $typeString, $matches);
 
@@ -357,9 +318,10 @@ final class TypeParser
             // when current is array
             // end next is < or {
             if ($nextPart === '<' || $nextPart === '{') {
-                if (isset($types[$refKey])) {
-                    $nextTypeExists = isset($types[$refKey + 1]);
-                    $types[$refKey] .= '---child-collection-' . ($nextTypeExists ? $refKey + 1 : $refKey) . '---';
+                ++$childArrKey;
+
+                if (array_key_exists($refKey, $types)) {
+                    $types[$refKey] .= '---child-collection-' . $childArrKey . '---';
                 }
 
                 $refKey = count($types);
