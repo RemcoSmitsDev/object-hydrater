@@ -9,6 +9,7 @@ use RemcoSmits\Hydrate\Docblock\TypeParser;
 use RemcoSmits\Hydrate\Docblock\Types\CollectionType;
 use RemcoSmits\Hydrate\Docblock\Types\IntType;
 use RemcoSmits\Hydrate\Docblock\Types\MixedType;
+use RemcoSmits\Hydrate\Docblock\Types\NullType;
 use RemcoSmits\Hydrate\Docblock\Types\ShapedCollection\ShapedCollectionItem;
 use RemcoSmits\Hydrate\Docblock\Types\ShapedCollectionType;
 use RemcoSmits\Hydrate\Docblock\Types\StringType;
@@ -20,14 +21,9 @@ class DocblockParserTest extends TestCase
     /** @throws FailedToParseDocblockToTypeException */
     public function testItCanParseDocblockToType(): void
     {
-        $typeString = 'string|null|mixed[]|Collection<string>|array<string>|array<int, string>|array<int, (string|int)>|array<int, array{remco: string|int, testing: string|int, a: string, "1": mixed, "1.1": mixed, array: array{age: int, name: string, hobbies: array{0: string, 1: string}}}>';
         $typeString = 'array<int, array1{remco: string|int, normal: array2{t: string, a: array{h: string, t: mixed}}, a: string, 1: mixed, array: array3{age: int, name: string, hobbies: array4{0: string, 1?: string|int}}}>';
-//        $typeString = 'array1<int, array2{remco: string|int, normal: array3{t: string, a: array{remco: string, smits: string}}, a: string, geen: array{groen: int, aarde: string}}>';
-//        $typeString = 'array1<int, array2{1: array3{2: array{remco: string, smits: string}}, a: string, geen: array{aarde: string}}>';
 
         $response = TypeParser::parse($typeString);
-
-//        dd($response);
 
         $this->assertInstanceOf(CollectionType::class, $response);
         assert($response instanceof CollectionType);
@@ -202,5 +198,32 @@ class DocblockParserTest extends TestCase
         $this->assertCount(2, $unionType->getTypes());
         $this->assertInstanceOf(StringType::class, $unionType->getTypes()[0]);
         $this->assertInstanceOf(IntType::class, $unionType->getTypes()[1]);
+    }
+
+    /**
+     * @throws FailedToParseDocblockToTypeException
+     */
+    public function testItCanParseUnionWithArray(): void
+    {
+        $typeString = 'string|null|mixed[]|Collection<string>|array<string>|array<int, string>|array<int, (string|int)>|array<int, array{remco: string|int, testing: string|int, a: string, 1: mixed, 1: mixed, array: array{age: int, name: string, hobbies: array{0: string, 1: string}}}>';
+        //        $typeString = 'array1<int, array2{remco: string|int, normal: array3{t: string, a: array{remco: string, smits: string}}, a: string, geen: array{groen: int, aarde: string}}>';
+//        $typeString = 'array1<int, array2{1: array3{2: array{remco: string, smits: string}}, a: string, geen: array{aarde: string}}>';
+
+        $response = TypeParser::parse($typeString);
+
+        $this->assertInstanceOf(UnionType::class, $response);
+
+        assert($response instanceof UnionType);
+
+        $types = $response->getTypes();
+
+        $this->assertInstanceOf(StringType::class, $types[0]);
+        $this->assertInstanceOf(NullType::class, $types[1]);
+
+        $this->assertInstanceOf(CollectionType::class, $types[2]);
+        assert($types[2] instanceof CollectionType);
+        $this->assertInstanceOf(MixedType::class, $types[2]->getSubType());
+
+        dd($types[2]);
     }
 }

@@ -9,6 +9,7 @@ use RemcoSmits\Hydrate\Docblock\Types\CollectionType;
 use RemcoSmits\Hydrate\Docblock\Types\IntType;
 use RemcoSmits\Hydrate\Docblock\Types\MixedType;
 use RemcoSmits\Hydrate\Docblock\Types\NullType;
+use RemcoSmits\Hydrate\Docblock\Types\ScalarType;
 use RemcoSmits\Hydrate\Docblock\Types\ShapedCollection\ShapedCollectionItem;
 use RemcoSmits\Hydrate\Docblock\Types\ShapedCollectionType;
 use RemcoSmits\Hydrate\Docblock\Types\StringType;
@@ -106,13 +107,19 @@ final class TypeParser
     {
         $type = self::removeUnnecessaryCharacters($type);
 
+        $hasUnionType = strpos($type, '|') !== false;
+
+        if (self::mainTypeIsCollection($type) === false && $hasUnionType) {
+            return new UnionType(self::splitToMultipleTypes($type));
+        }
+
         if (preg_match('/\[\]|\<|\>|\{|\}/', $type) === 1) {
             return self::parseCollectionType($type);
         }
 
-        if (strpos($type, '|') !== false) {
+        if ($hasUnionType) {
             return new UnionType(
-                array_map(static fn(string $type) => self::parse($type), explode('|', $type))
+                array_map(static fn(string $type) => self::parse(trim($type)), explode('|', $type))
             );
         }
 
@@ -131,7 +138,10 @@ final class TypeParser
                 return new IntType();
             case 'mixed':
                 return new MixedType();
+            case 'scalar':
+                return new ScalarType();
             default:
+//                return new MixedType();
                 throw new RuntimeException(sprintf('failed to map type [%s]', $type));
         }
     }
@@ -143,8 +153,8 @@ final class TypeParser
         if (preg_match(self::COLLECTION_TYPES_REGEX[0], $collectionType, $match) === 1) {
             return new CollectionType(
                 'array',
-                self::DEFAULT_ARRAY_KEY_TYPES,
-                self::splitToMultipleTypes($match['collectionItemTypeName'])
+                [new StringType(), new IntType()],
+                self::parse($match['collectionItemTypeName'])
             );
         }
 
@@ -152,8 +162,8 @@ final class TypeParser
         if (preg_match(self::COLLECTION_TYPES_REGEX[1], $collectionType, $match) === 1) {
             return new CollectionType(
                 $match['collectionTypeName'],
-                self::DEFAULT_ARRAY_KEY_TYPES,
-                self::splitToMultipleTypes($match['collectionItemTypeName'])
+                [new StringType(), new IntType()],
+                self::parse($match['collectionItemTypeName'])
             );
         }
 
@@ -162,7 +172,7 @@ final class TypeParser
             return new CollectionType(
                 $match['collectionTypeName'],
                 self::splitToMultipleTypes($match['collectionKeyTypes']),
-                self::splitToMultipleTypes($match['collectionItemTypeName'])
+                self::parse($match['collectionItemTypeName'])
             );
         }
 
@@ -179,14 +189,52 @@ final class TypeParser
         }
     }
 
+    /** @throws FailedToParseDocblockToTypeException */
     private static function splitToMultipleTypes(string $typeString): array
     {
-        return array_map(static fn(string $type) => self::mapStringToType($type), explode('|', $typeString));
+        if (preg_match('/\<|\{/', $typeString) === 0) {
+            return array_map(
+                static fn(string $type) => self::parse($type),
+                explode('|', $typeString)
+            );
+        }
+
+        $types = [];
+        $currentType = '';
+
+        $openings = 0;
+
+        preg_match_all(self::generateRegexp(), $typeString, $match);
+
+        foreach ($match[0] as $match) {
+            if ($match === '<' || $match === '{') {
+                ++$openings;
+            }
+
+            if ($match === '>' || $match === '}') {
+                --$openings;
+            }
+
+            if ($match === '|' && $openings === 0) {
+                $types[] = self::parse($currentType);
+                $currentType = '';
+                continue;
+            }
+
+            $currentType .= $match;
+        }
+
+        return $types;
     }
 
     private static function removeUnnecessaryCharacters(string $typeString): string
     {
-        return str_replace(['(', ')', '&', '\'', '"'], '', $typeString);
+        return str_replace(['(', ')', '&', '\'', '"'], '', trim($typeString));
+    }
+
+    private static function mainTypeIsCollection(string $type): bool
+    {
+        return preg_match('/^[A-z0-9]+(\<|\{)/', $type) !== 0;
     }
 
     private static function generateRegexp(): string
@@ -287,7 +335,6 @@ final class TypeParser
             $collectionClass = new CollectionType(
                 preg_replace('/^([A-z0-9]+)\<.*/', '$1', $currentType),
                 ['int'],
-                []
             );
 
             $collectionClass->setSubType(
@@ -340,7 +387,11 @@ final class TypeParser
                 continue;
             }
 
-            $types[$refKey] .= $part;
+            if (array_key_exists($refKey, $types)) {
+                $types[$refKey] .= $part;
+            } else {
+                $types[] = $part;
+            }
         }
 
         return $types;
