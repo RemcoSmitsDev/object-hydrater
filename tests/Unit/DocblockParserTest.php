@@ -140,12 +140,67 @@ class DocblockParserTest extends TestCase
         $this->assertEquals('array', $shape->getKey());
         $this->assertFalse($shape->isOptional());
 
+        $this->assertInstanceOf(ShapedCollectionType::class, $shape->getType());
+        $this->assertEquals('array3', $shape->getType()->getTypeName());
+
+        $subType = $shape->getType();
+
+        assert($subType instanceof ShapedCollectionType);
+
+        $this->assertCount(3, $subType->getShapes());
+
         $shape = $subType->getShapes()[0];
 
-//        dd($subType->getShapes());
+        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
+        $this->assertEquals('age', $shape->getKey());
+        $this->assertFalse($shape->isOptional());
+        $this->assertInstanceOf(IntType::class, $shape->getType());
 
-//        $shape = $shape->getShapes()[0];
+        $shape = $subType->getShapes()[1];
 
-//        dd($shape);
+        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
+        $this->assertEquals('name', $shape->getKey());
+        $this->assertFalse($shape->isOptional());
+        $this->assertInstanceOf(StringType::class, $shape->getType());
+
+
+        $shape = $subType->getShapes()[2];
+
+        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
+        $this->assertEquals('hobbies', $shape->getKey());
+        $this->assertFalse($shape->isOptional());
+        $this->assertInstanceOf(ShapedCollectionType::class, $shape->getType());
+
+        $subType = $shape->getType();
+
+        assert($subType instanceof ShapedCollectionType);
+
+        $this->assertEquals('array4', $subType->getTypeName());
+        $this->assertCount(2, $subType->getShapes());
+        $this->assertIsArray($subType->getShapes());
+
+
+        $shape = $subType->getShapes()[0];
+
+        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
+        $this->assertEquals('0', $shape->getKey());
+        $this->assertFalse($shape->isOptional());
+        $this->assertInstanceOf(StringType::class, $shape->getType());
+
+        $shape = $subType->getShapes()[1];
+
+        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
+        $this->assertEquals('1', $shape->getKey());
+        $this->assertTrue($shape->isOptional());
+        $this->assertInstanceOf(UnionType::class, $shape->getType());
+
+        $unionType = $shape->getType();
+
+        assert($unionType instanceof UnionType);
+
+        $this->assertIsArray($unionType->getTypes());
+        $this->assertCount(2, $unionType->getTypes());
+        $this->assertInstanceOf(StringType::class, $unionType->getTypes()[0]);
+        $this->assertInstanceOf(IntType::class, $unionType->getTypes()[1]);
     }
 }
