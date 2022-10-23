@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace RemcoSmits\Hydrate\Docblock\Types;
 
+/**
+ * @template TValue of AbstractType
+ */
 final class UnionType extends AbstractType
 {
-    /** @var AbstractType[] */
+    /** @var TValue[] */
     private array $types;
 
-    /** @param AbstractType[] $types */
+    /** @param TValue[] $types */
     public function __construct(array $types)
     {
         $this->types = $types;
     }
 
-    /** @return AbstractType[] */
+    /** @return TValue[] */
     public function getTypes(): array
     {
         return $this->types;

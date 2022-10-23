@@ -7,9 +7,9 @@ namespace RemcoSmits\Hydrate;
 use phpDocumentor\Reflection\TypeResolver;
 use phpDocumentor\Reflection\Types\ContextFactory;
 use ReflectionException;
+use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\Exception\AbstractHydrateException;
 use RemcoSmits\Hydrate\Exception\ClassDoesntExistsException;
-use RemcoSmits\Hydrate\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\Exception\HydrateFailedException;
 use RemcoSmits\Hydrate\Exception\InvalidDataTypeException;
 use RemcoSmits\Hydrate\Exception\ValueWasNotFoundException;
@@ -217,7 +217,7 @@ final class HydratePropertyReflector
      *
      * @return class-string
      *
-     * @throws FailedToParseDocblockToTypeException
+     * @throws \RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException
      * @throws ReflectionException
      */
     private function findFqn(HydrateReflectionProperty $property): string

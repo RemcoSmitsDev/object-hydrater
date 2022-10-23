@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace RemcoSmits\Hydrate;
 
-use RemcoSmits\Hydrate\Exception\FailedToParseDocblockToTypeException;
+use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
 use Throwable;
 
 // COVERT:
@@ -23,7 +23,7 @@ final class DocblockParser
         '@var\s+([A-z]+)\<[A-z]+,\s+([A-z]+)\>',
     ];
 
-    /** @throws FailedToParseDocblockToTypeException */
+    /** @throws \RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException */
     public static function getType(string $docblock): PropertyType
     {
         try {
@@ -57,7 +57,7 @@ final class DocblockParser
     /**
      * @return array<int, string>
      *
-     * @throws FailedToParseDocblockToTypeException
+     * @throws \RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException
      */
     private static function parseDocblock(string $regex, string $docblock): array
     {

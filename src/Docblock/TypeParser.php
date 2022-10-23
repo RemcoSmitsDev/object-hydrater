@@ -4,110 +4,30 @@ declare(strict_types=1);
 
 namespace RemcoSmits\Hydrate\Docblock;
 
+use RemcoSmits\Hydrate\Docblock\Exception\FailedToMapTypeException;
+use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\Docblock\Types\AbstractType;
 use RemcoSmits\Hydrate\Docblock\Types\CollectionType;
 use RemcoSmits\Hydrate\Docblock\Types\IntType;
-use RemcoSmits\Hydrate\Docblock\Types\MixedType;
-use RemcoSmits\Hydrate\Docblock\Types\NullType;
-use RemcoSmits\Hydrate\Docblock\Types\ScalarType;
 use RemcoSmits\Hydrate\Docblock\Types\ShapedCollection\ShapedCollectionItem;
 use RemcoSmits\Hydrate\Docblock\Types\ShapedCollectionType;
 use RemcoSmits\Hydrate\Docblock\Types\StringType;
 use RemcoSmits\Hydrate\Docblock\Types\UnionType;
-use RemcoSmits\Hydrate\Exception\FailedToParseDocblockToTypeException;
-use RuntimeException;
 use Throwable;
 
 final class TypeParser
 {
-    public const TOKEN_REFERENCE = 0;
-    public const TOKEN_UNION = 1;
-    public const TOKEN_INTERSECTION = 2;
-    public const TOKEN_NULLABLE = 3;
-    public const TOKEN_OPEN_PARENTHESES = 4;
-    public const TOKEN_CLOSE_PARENTHESES = 5;
-    public const TOKEN_OPEN_ANGLE_BRACKET = 6;
-    public const TOKEN_CLOSE_ANGLE_BRACKET = 7;
-    public const TOKEN_OPEN_SQUARE_BRACKET = 8;
-    public const TOKEN_CLOSE_SQUARE_BRACKET = 9;
-    public const TOKEN_COMMA = 10;
-    public const TOKEN_VARIADIC = 11;
-    public const TOKEN_DOUBLE_COLON = 12;
-    public const TOKEN_DOUBLE_ARROW = 13;
-    public const TOKEN_EQUAL = 14;
-    public const TOKEN_OPEN_PHPDOC = 15;
-    public const TOKEN_CLOSE_PHPDOC = 16;
-    public const TOKEN_PHPDOC_TAG = 17;
-    public const TOKEN_FLOAT = 18;
-    public const TOKEN_INTEGER = 19;
-    public const TOKEN_SINGLE_QUOTED_STRING = 20;
-    public const TOKEN_DOUBLE_QUOTED_STRING = 21;
-    public const TOKEN_IDENTIFIER = 22;
-    public const TOKEN_THIS_VARIABLE = 23;
-    public const TOKEN_VARIABLE = 24;
-    public const TOKEN_HORIZONTAL_WS = 25;
-    public const TOKEN_PHPDOC_EOL = 26;
-    public const TOKEN_OTHER = 27;
-    public const TOKEN_END = 28;
-    public const TOKEN_COLON = 29;
-    public const TOKEN_WILDCARD = 30;
-    public const TOKEN_OPEN_CURLY_BRACKET = 31;
-    public const TOKEN_CLOSE_CURLY_BRACKET = 32;
-    public const TOKEN_NEGATED = 33;
-    public const TOKEN_ARROW = 34;
-
-    public const TOKEN_LABELS = [
-        self::TOKEN_REFERENCE => '\'&\'',
-        self::TOKEN_UNION => '\'|\'',
-        self::TOKEN_INTERSECTION => '\'&\'',
-        self::TOKEN_NULLABLE => '\'?\'',
-        self::TOKEN_NEGATED => '\'!\'',
-        self::TOKEN_OPEN_PARENTHESES => '\'(\'',
-        self::TOKEN_CLOSE_PARENTHESES => '\')\'',
-        self::TOKEN_OPEN_ANGLE_BRACKET => '\'<\'',
-        self::TOKEN_CLOSE_ANGLE_BRACKET => '\'>\'',
-        self::TOKEN_OPEN_SQUARE_BRACKET => '\'[\'',
-        self::TOKEN_CLOSE_SQUARE_BRACKET => '\']\'',
-        self::TOKEN_OPEN_CURLY_BRACKET => '\'{\'',
-        self::TOKEN_CLOSE_CURLY_BRACKET => '\'}\'',
-        self::TOKEN_COMMA => '\',\'',
-        self::TOKEN_COLON => '\':\'',
-        self::TOKEN_VARIADIC => '\'...\'',
-        self::TOKEN_DOUBLE_COLON => '\'::\'',
-        self::TOKEN_DOUBLE_ARROW => '\'=>\'',
-        self::TOKEN_ARROW => '\'->\'',
-        self::TOKEN_EQUAL => '\'=\'',
-        self::TOKEN_OPEN_PHPDOC => '\'/**\'',
-        self::TOKEN_CLOSE_PHPDOC => '\'*/\'',
-        self::TOKEN_PHPDOC_TAG => 'TOKEN_PHPDOC_TAG',
-        self::TOKEN_PHPDOC_EOL => 'TOKEN_PHPDOC_EOL',
-        self::TOKEN_FLOAT => 'TOKEN_FLOAT',
-        self::TOKEN_INTEGER => 'TOKEN_INTEGER',
-        self::TOKEN_SINGLE_QUOTED_STRING => 'TOKEN_SINGLE_QUOTED_STRING',
-        self::TOKEN_DOUBLE_QUOTED_STRING => 'TOKEN_DOUBLE_QUOTED_STRING',
-        self::TOKEN_IDENTIFIER => 'type',
-        self::TOKEN_THIS_VARIABLE => '\'$this\'',
-        self::TOKEN_VARIABLE => 'variable',
-        self::TOKEN_HORIZONTAL_WS => 'TOKEN_HORIZONTAL_WS',
-        self::TOKEN_OTHER => 'TOKEN_OTHER',
-        self::TOKEN_END => 'TOKEN_END',
-        self::TOKEN_WILDCARD => '*',
-    ];
-
-    public const COLLECTION_TYPES_REGEX = [
-        '/^(?<collectionItemTypeName>[A-z]+)\[\]$/',
-        '/^(?<collectionTypeName>[A-z]+)\<(?<collectionItemTypeName>[A-z]+)\>$/',
-        '/^(?<collectionTypeName>[A-z]+)\<(?<collectionKeyTypes>[A-z\|]+),\s*(?<collectionItemTypeName>[A-z\|]+)\>$/'
-    ];
-
-    /** @throws FailedToParseDocblockToTypeException */
+    /**
+     * @throws FailedToMapTypeException
+     * @throws FailedToParseDocblockToTypeException
+     */
     public static function parse(string $type): AbstractType
     {
-        $type = self::removeUnnecessaryCharacters($type);
+        $type = TypeParserUtil::removeUnnecessaryCharacters($type);
 
         $hasUnionType = strpos($type, '|') !== false;
 
-        if ($hasUnionType && self::mainTypeIsCollection($type) === false) {
+        if ($hasUnionType && TypeParserUtil::mainTypeIsCollection($type) === false) {
             return new UnionType(self::splitToMultipleTypes($type));
         }
 
@@ -116,60 +36,41 @@ final class TypeParser
         }
 
         if ($hasUnionType) {
-            return new UnionType(
-                array_map(static fn(string $type) => self::parse(trim($type)), explode('|', $type))
-            );
+            return new UnionType(self::splitToMultipleTypes($type));
         }
 
-        return self::mapStringToType($type);
+        return TypeParserUtil::mapStringToType($type);
     }
 
-    /** @throws RuntimeException */
-    private static function mapStringToType(string $type): AbstractType
-    {
-        switch ($type) {
-            case 'string':
-                return new StringType();
-            case 'null':
-                return new NullType();
-            case 'int':
-            case 'integer':
-                return new IntType();
-            case 'mixed':
-                return new MixedType();
-            case 'scalar':
-                return new ScalarType();
-            default:
-                throw new RuntimeException(sprintf('failed to map type [%s]', $type));
-        }
-    }
-
-    /** @throws FailedToParseDocblockToTypeException */
+    /**
+     * @throws FailedToParseDocblockToTypeException
+     * @throws FailedToMapTypeException
+     */
     private static function parseCollectionType(string $collectionType): AbstractType
     {
         // CollectionItem[] or mixed[] or string[]
-        if (preg_match(self::COLLECTION_TYPES_REGEX[0], $collectionType, $match) === 1) {
+        if (preg_match(TypeParserRegex::COLLECTION_TYPES_REGEX[0], $collectionType, $match) === 1) {
             return new CollectionType(
                 'array',
-                [new IntType(), new StringType()],
+                new UnionType([new IntType(), new StringType()]),
                 self::parse($match['collectionItemTypeName'])
             );
         }
 
         // Collection<string> or array<string>
-        if (preg_match(self::COLLECTION_TYPES_REGEX[1], $collectionType, $match) === 1) {
+        if (preg_match(TypeParserRegex::COLLECTION_TYPES_REGEX[1], $collectionType, $match) === 1) {
             return new CollectionType(
                 $match['collectionTypeName'],
-                [new IntType(), new StringType()],
+                new UnionType([new IntType(), new StringType()]),
                 self::parse($match['collectionItemTypeName'])
             );
         }
 
         // Collection<int, string> or array<int, string>
-        if (preg_match(self::COLLECTION_TYPES_REGEX[2], $collectionType, $match) === 1) {
+        if (preg_match(TypeParserRegex::COLLECTION_TYPES_REGEX[2], $collectionType, $match) === 1) {
             return new CollectionType(
                 $match['collectionTypeName'],
-                self::splitToMultipleTypes($match['collectionKeyTypes']),
+                self::splitToUnionTypeIfIsUnion($match['collectionKeyTypes']),
                 self::parse($match['collectionItemTypeName'])
             );
         }
@@ -186,7 +87,12 @@ final class TypeParser
         }
     }
 
-    /** @throws FailedToParseDocblockToTypeException */
+    /**
+     * @return AbstractType[]
+     *
+     * @throws FailedToMapTypeException
+     * @throws FailedToParseDocblockToTypeException
+     */
     private static function splitToMultipleTypes(string $typeString): array
     {
         if (preg_match('/\<|\{/', $typeString) === 0) {
@@ -198,10 +104,9 @@ final class TypeParser
 
         $types = [];
         $currentType = '';
-
         $openings = 0;
 
-        preg_match_all(self::generateRegexp(), $typeString, $match);
+        preg_match_all(TypeParserRegex::generateRegexp(), $typeString, $match);
 
         foreach ($match[0] as $match) {
             if ($match === '<' || $match === '{') {
@@ -228,86 +133,38 @@ final class TypeParser
         return $types;
     }
 
-    private static function removeUnnecessaryCharacters(string $typeString): string
+    /**
+     * @return UnionType|AbstractType
+     *
+     * @throws FailedToMapTypeException
+     * @throws FailedToParseDocblockToTypeException
+     */
+    private static function splitToUnionTypeIfIsUnion(string $typeString): AbstractType
     {
-        return str_replace(['(', ')', '&', '\'', '"'], '', trim($typeString));
-    }
-
-    private static function mainTypeIsCollection(string $type): bool
-    {
-        return preg_match('/^[A-z0-9]+(\<|\{)/', $type) !== 0;
-    }
-
-    private static function generateRegexp(): string
-    {
-        $patterns = [
-            self::TOKEN_HORIZONTAL_WS => '[\\x09\\x20]++',
-
-            self::TOKEN_IDENTIFIER => '(?:[\\\\]?+[a-z_\\x80-\\xFF][0-9a-z_\\x80-\\xFF-]*+)++',
-            self::TOKEN_THIS_VARIABLE => '\\$this(?![0-9a-z_\\x80-\\xFF])',
-            self::TOKEN_VARIABLE => '\\$[a-z_\\x80-\\xFF][0-9a-z_\\x80-\\xFF]*+',
-
-            // '&' followed by TOKEN_VARIADIC, TOKEN_VARIABLE, TOKEN_EQUAL, TOKEN_EQUAL or TOKEN_CLOSE_PARENTHESES
-            self::TOKEN_REFERENCE => '&(?=\\s*+(?:[.,=)]|(?:\\$(?!this(?![0-9a-z_\\x80-\\xFF])))))',
-            self::TOKEN_UNION => '\\|',
-            self::TOKEN_INTERSECTION => '&',
-            self::TOKEN_NULLABLE => '\\?',
-            self::TOKEN_NEGATED => '!',
-
-            self::TOKEN_OPEN_PARENTHESES => '\\(',
-            self::TOKEN_CLOSE_PARENTHESES => '\\)',
-            self::TOKEN_OPEN_ANGLE_BRACKET => '<',
-            self::TOKEN_CLOSE_ANGLE_BRACKET => '>',
-            self::TOKEN_OPEN_SQUARE_BRACKET => '\\[',
-            self::TOKEN_CLOSE_SQUARE_BRACKET => '\\]',
-            self::TOKEN_OPEN_CURLY_BRACKET => '\\{',
-            self::TOKEN_CLOSE_CURLY_BRACKET => '\\}',
-
-            self::TOKEN_COMMA => ',',
-            self::TOKEN_VARIADIC => '\\.\\.\\.',
-            self::TOKEN_DOUBLE_COLON => '::',
-            self::TOKEN_DOUBLE_ARROW => '=>',
-            self::TOKEN_ARROW => '->',
-            self::TOKEN_EQUAL => '=',
-            self::TOKEN_COLON => ':',
-
-            self::TOKEN_OPEN_PHPDOC => '/\\*\\*(?=\\s)\\x20?+',
-            self::TOKEN_CLOSE_PHPDOC => '\\*/',
-            self::TOKEN_PHPDOC_TAG => '@[a-z][a-z0-9-\\\\]*+',
-            self::TOKEN_PHPDOC_EOL => '\\r?+\\n[\\x09\\x20]*+(?:\\*(?!/)\\x20?+)?',
-
-            self::TOKEN_FLOAT => '(?:-?[0-9]++\\.[0-9]*+(?:e-?[0-9]++)?)|(?:-?[0-9]*+\\.[0-9]++(?:e-?[0-9]++)?)|(?:-?[0-9]++e-?[0-9]++)',
-            self::TOKEN_INTEGER => '-?(?:(?:0b[0-1]++)|(?:0o[0-7]++)|(?:0x[0-9a-f]++)|(?:[0-9]++))',
-            self::TOKEN_SINGLE_QUOTED_STRING => '\'(?:\\\\[^\\r\\n]|[^\'\\r\\n\\\\])*+\'',
-            self::TOKEN_DOUBLE_QUOTED_STRING => '"(?:\\\\[^\\r\\n]|[^"\\r\\n\\\\])*+"',
-
-            self::TOKEN_WILDCARD => '\\*',
-
-            // anything but TOKEN_CLOSE_PHPDOC or TOKEN_HORIZONTAL_WS or TOKEN_EOL
-            self::TOKEN_OTHER => '(?:(?!\\*/)[^\\s])++',
-        ];
-
-        foreach ($patterns as &$pattern) {
-            $pattern = '(?:' . $pattern . ')';
+        if (strpos($typeString, '|') === false) {
+            return self::parse($typeString);
         }
 
-        return '~' . implode('|', $patterns) . '~Asi';
+        return new UnionType(self::splitToMultipleTypes($typeString));
     }
 
-
     /**
+     * @param array<int, string> $types
+     * @return AbstractType
+     *
+     * @throws FailedToMapTypeException
      * @throws FailedToParseDocblockToTypeException
      */
     private static function formatShapedArrayType(array &$types): AbstractType
     {
         $regex1 = '/([A-z0-9\.\-]+)(\?*)\:\s(?:([A-z\|]+)|---child-collection-(\d+)---)/';
-        $regex2 = '/([A-z\|]+)\,\s(?:([A-z\|]+)|---child-collection-(\d+)---)/';
+        $regex2 = '/([A-z\|]+)\,\s((?:([A-z\|]+)|---child-collection-(\d+)---)+)/';
 
         $currentType = array_shift($types);
 
         if (preg_match_all($regex1, $currentType, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
             $collectionClass = new ShapedCollectionType(
-                preg_replace('/^([A-z0-9]+)\{.*/', '$1', $currentType),
+                TypeParserUtil::getNameFromCollectionType($currentType),
             );
 
             foreach ($match[1] as $_key => $arrayKey) {
@@ -333,12 +190,25 @@ final class TypeParser
 
         if (preg_match($regex2, $currentType, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
             $collectionClass = new CollectionType(
-                preg_replace('/^([A-z0-9]+)\<.*/', '$1', $currentType),
-                self::splitToMultipleTypes($match[1]),
+                TypeParserUtil::getNameFromCollectionType($currentType),
+                self::splitToUnionTypeIfIsUnion($match[1])
             );
 
+            if (is_numeric($match[4]) && strpos($match[2], '|') !== false) {
+                $un = new UnionType(
+                    array_map(
+                        static fn(string $type) => strpos($type, '--') !== false ? self::formatShapedArrayType(
+                            $types
+                        ) : self::parse($type),
+                        explode('|', $match[2])
+                    )
+                );
+
+                return $collectionClass->setSubType($un);
+            }
+
             $collectionClass->setSubType(
-                is_numeric($match[3]) ? self::formatShapedArrayType($types) : self::parse($match[1])
+                is_numeric($match[4]) ? self::formatShapedArrayType($types) : self::parse($match[2])
             );
 
             return $collectionClass;
@@ -347,18 +217,18 @@ final class TypeParser
         throw new FailedToParseDocblockToTypeException('failed to match something');
     }
 
+    /**
+     * @return array<int, string>
+     *
+     * @throws FailedToParseDocblockToTypeException
+     */
     private static function splitNestedCollectionTypes(string $typeString): array
     {
         $types = [];
         $refKey = 0;
-
         $childArrKey = -1;
 
-        preg_match_all(self::generateRegexp(), $typeString, $matches);
-
-        $matches = $matches[0];
-
-        foreach ($matches as $part) {
+        foreach ($matches = TypeParserRegex::matchAll($typeString) as $part) {
             // when is collection
             $nextPart = next($matches);
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace RemcoSmits\Hydrate\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use RemcoSmits\Hydrate\Docblock\Exception\FailedToMapTypeException;
+use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\Docblock\TypeParser;
 use RemcoSmits\Hydrate\Docblock\Types\CollectionType;
 use RemcoSmits\Hydrate\Docblock\Types\IntType;
@@ -14,11 +16,13 @@ use RemcoSmits\Hydrate\Docblock\Types\ShapedCollection\ShapedCollectionItem;
 use RemcoSmits\Hydrate\Docblock\Types\ShapedCollectionType;
 use RemcoSmits\Hydrate\Docblock\Types\StringType;
 use RemcoSmits\Hydrate\Docblock\Types\UnionType;
-use RemcoSmits\Hydrate\Exception\FailedToParseDocblockToTypeException;
 
 class DocblockParserTest extends TestCase
 {
-    /** @throws FailedToParseDocblockToTypeException */
+    /**
+     * @throws FailedToMapTypeException
+     * @throws FailedToParseDocblockToTypeException
+     */
     public function testItCanParseDocblockToType(): void
     {
         $typeString = 'array<int, array1{remco: string|int, normal: array2{t: string, a: array{h: string, t: mixed}}, a: string, 1: mixed, array: array3{age: int, name: string, hobbies: array4{0: string, 1?: string|int}}}>';
@@ -27,7 +31,7 @@ class DocblockParserTest extends TestCase
 
         $type = new CollectionType(
             'array',
-            [new IntType()],
+            new IntType(),
             new ShapedCollectionType(
                 'array1',
                 [
@@ -129,10 +133,11 @@ class DocblockParserTest extends TestCase
             )
         );
 
-        $this->assertEquals($response, $type);
+        $this->assertEquals($type, $response);
     }
 
     /**
+     * @throws FailedToMapTypeException
      * @throws FailedToParseDocblockToTypeException
      */
     public function testItCanParseUnionWithArray(): void
@@ -146,52 +151,44 @@ class DocblockParserTest extends TestCase
             new NullType(),
             new CollectionType(
                 'array',
-                [new IntType(), new StringType()],
+                new UnionType([new IntType(), new StringType()]),
                 new MixedType()
             ),
             new CollectionType(
                 'Collection',
-                [new IntType(), new StringType()],
+                new UnionType([new IntType(), new StringType()]),
                 new StringType()
             ),
             new CollectionType(
                 'array',
-                [new IntType(), new StringType()],
+                new UnionType([new IntType(), new StringType()]),
                 new StringType()
             ),
             new CollectionType(
                 'array',
-                [new IntType()],
+                new IntType(),
                 new StringType()
             ),
             new CollectionType(
                 'array',
-                [new IntType()],
-                new UnionType(
-                    [new StringType(), new IntType()]
-                )
+                new IntType(),
+                new UnionType([new StringType(), new IntType()])
             ),
             new CollectionType(
                 'array',
-                [new IntType()],
+                new IntType(),
                 new ShapedCollectionType(
                     'array',
                     [
                         new ShapedCollectionItem(
                             'remco',
                             false,
-                            new UnionType([
-                                new StringType(),
-                                new IntType()
-                            ])
+                            new UnionType([new StringType(), new IntType()])
                         ),
                         new ShapedCollectionItem(
                             'testing',
                             false,
-                            new UnionType([
-                                new StringType(),
-                                new IntType()
-                            ])
+                            new UnionType([new StringType(), new IntType()])
                         ),
                         new ShapedCollectionItem(
                             'a',
@@ -246,6 +243,34 @@ class DocblockParserTest extends TestCase
             )
         ]);
 
-        $this->assertEquals($response, $type);
+        $this->assertEquals($type, $response);
+    }
+
+    /**
+     * @throws FailedToParseDocblockToTypeException
+     * @throws FailedToMapTypeException
+     */
+    public function testItCanDoStuff(): void
+    {
+        $response = TypeParser::parse('array<string, string|mixed|array{remco: string, smits: string}|int>');
+
+        $type = new CollectionType(
+            'array',
+            new StringType(),
+            new UnionType([
+                new StringType(),
+                new MixedType(),
+                new ShapedCollectionType(
+                    'array',
+                    [
+                        new ShapedCollectionItem('remco', false, new StringType()),
+                        new ShapedCollectionItem('smits', false, new StringType()),
+                    ]
+                ),
+                new IntType()
+            ])
+        );
+
+        $this->assertEquals($type, $response);
     }
 }

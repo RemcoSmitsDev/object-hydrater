@@ -6,8 +6,8 @@ namespace RemcoSmits\Hydrate\Reflection;
 
 use ReflectionException;
 use ReflectionProperty;
+use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\DocblockParser;
-use RemcoSmits\Hydrate\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\PropertyType;
 
 final class HydrateReflectionProperty
@@ -31,7 +31,7 @@ final class HydrateReflectionProperty
 
     /**
      * @throws ReflectionException
-     * @throws FailedToParseDocblockToTypeException
+     * @throws \RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException
      */
     public function __construct(ReflectionProperty $property)
     {
@@ -56,7 +56,7 @@ final class HydrateReflectionProperty
 
     /**
      * @throws ReflectionException
-     * @throws FailedToParseDocblockToTypeException
+     * @throws \RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException
      */
     public function getPropertyType(): PropertyType
     {
