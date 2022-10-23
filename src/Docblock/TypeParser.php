@@ -124,6 +124,7 @@ final class TypeParser
         return self::mapStringToType($type);
     }
 
+    /** @throws RuntimeException */
     private static function mapStringToType(string $type): AbstractType
     {
         switch ($type) {
@@ -139,7 +140,6 @@ final class TypeParser
             case 'scalar':
                 return new ScalarType();
             default:
-//                return new MixedType();
                 throw new RuntimeException(sprintf('failed to map type [%s]', $type));
         }
     }
@@ -180,7 +180,6 @@ final class TypeParser
 
             return self::formatShapedArrayType($types);
         } catch (Throwable $throwable) {
-            dd($throwable);
             throw new FailedToParseDocblockToTypeException(
                 sprintf('Failed to parse [%s]', $collectionType)
             );
@@ -297,13 +296,12 @@ final class TypeParser
      */
     private static function formatShapedArrayType(array &$types): AbstractType
     {
-        $r = '/([A-z0-9\.\-_]+)(\?*)\:\s(?:([A-z\|]+)|---child-collection-([0-9]+)---)/';
-        $r2 = '/([A-z\|]+)\,\s(?:([A-z\|]+)|---child-collection-([0-9]+)---)/';
+        $regex1 = '/([A-z0-9\.\-]+)(\?*)\:\s(?:([A-z\|]+)|---child-collection-(\d+)---)/';
+        $regex2 = '/([A-z\|]+)\,\s(?:([A-z\|]+)|---child-collection-(\d+)---)/';
 
-        // array1<int, array2{1: array3{2: array{remco: string, smits: string}}, a: string, geen: array{aarde: string}}>
         $currentType = array_shift($types);
 
-        if (preg_match_all($r, $currentType, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
+        if (preg_match_all($regex1, $currentType, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
             $collectionClass = new ShapedCollectionType(
                 preg_replace('/^([A-z0-9]+)\{.*/', '$1', $currentType),
             );
@@ -329,7 +327,7 @@ final class TypeParser
             return $collectionClass;
         }
 
-        if (preg_match($r2, $currentType, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
+        if (preg_match($regex2, $currentType, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
             $collectionClass = new CollectionType(
                 preg_replace('/^([A-z0-9]+)\<.*/', '$1', $currentType),
                 self::splitToMultipleTypes($match[1]),
