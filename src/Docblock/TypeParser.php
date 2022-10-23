@@ -106,9 +106,7 @@ final class TypeParser
         $currentType = '';
         $openings = 0;
 
-        preg_match_all(TypeParserRegex::generateRegexp(), $typeString, $match);
-
-        foreach ($match[0] as $match) {
+        foreach (TypeParserRegex::matchAll($typeString) as $match) {
             if ($match === '<' || $match === '{') {
                 ++$openings;
             }
