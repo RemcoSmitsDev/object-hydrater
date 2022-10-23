@@ -100,8 +100,6 @@ final class TypeParser
         '/^(?<collectionTypeName>[A-z]+)\<(?<collectionKeyTypes>[A-z\|]+),\s*(?<collectionItemTypeName>[A-z\|]+)\>$/'
     ];
 
-    public const DEFAULT_ARRAY_KEY_TYPES = ['int', 'string'];
-
     /** @throws FailedToParseDocblockToTypeException */
     public static function parse(string $type): AbstractType
     {
@@ -109,7 +107,7 @@ final class TypeParser
 
         $hasUnionType = strpos($type, '|') !== false;
 
-        if (self::mainTypeIsCollection($type) === false && $hasUnionType) {
+        if ($hasUnionType && self::mainTypeIsCollection($type) === false) {
             return new UnionType(self::splitToMultipleTypes($type));
         }
 
@@ -334,11 +332,11 @@ final class TypeParser
         if (preg_match($r2, $currentType, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
             $collectionClass = new CollectionType(
                 preg_replace('/^([A-z0-9]+)\<.*/', '$1', $currentType),
-                ['int'],
+                self::splitToMultipleTypes($match[1]),
             );
 
             $collectionClass->setSubType(
-                is_numeric($match[3]) ? self::formatShapedArrayType($types) : self::parse($match[1] ?? 'failed')
+                is_numeric($match[3]) ? self::formatShapedArrayType($types) : self::parse($match[1])
             );
 
             return $collectionClass;

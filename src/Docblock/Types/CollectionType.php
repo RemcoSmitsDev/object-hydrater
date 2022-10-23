@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace RemcoSmits\Hydrate\Docblock\Types;
 
-class CollectionType extends AbstractType
+final class CollectionType extends AbstractType
 {
     /** @var array<int, StringType|IntType> */
     private array $collectionKeyTypes;

@@ -25,179 +25,111 @@ class DocblockParserTest extends TestCase
 
         $response = TypeParser::parse($typeString);
 
-        $this->assertInstanceOf(CollectionType::class, $response);
-        assert($response instanceof CollectionType);
+        $type = new CollectionType(
+            'array',
+            [new IntType()],
+            new ShapedCollectionType(
+                'array1',
+                [
+                    new ShapedCollectionItem(
+                        'remco',
+                        false,
+                        new UnionType([
+                            new StringType(),
+                            new IntType()
+                        ])
+                    ),
+                    new ShapedCollectionItem(
+                        'normal',
+                        false,
+                        new ShapedCollectionType(
+                            'array2',
+                            [
+                                new ShapedCollectionItem(
+                                    't',
+                                    false,
+                                    new StringType()
+                                ),
+                                new ShapedCollectionItem(
+                                    'a',
+                                    false,
+                                    new ShapedCollectionType(
+                                        'array',
+                                        [
+                                            new ShapedCollectionItem(
+                                                'h',
+                                                false,
+                                                new StringType()
+                                            ),
+                                            new ShapedCollectionItem(
+                                                't',
+                                                false,
+                                                new MixedType()
+                                            )
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    ),
+                    new ShapedCollectionItem(
+                        'a',
+                        false,
+                        new StringType()
+                    ),
+                    new ShapedCollectionItem(
+                        '1',
+                        false,
+                        new MixedType()
+                    ),
+                    new ShapedCollectionItem(
+                        'array',
+                        false,
+                        new ShapedCollectionType(
+                            'array3',
+                            [
+                                new ShapedCollectionItem(
+                                    'age',
+                                    false,
+                                    new IntType()
+                                ),
+                                new ShapedCollectionItem(
+                                    'name',
+                                    false,
+                                    new StringType()
+                                ),
+                                new ShapedCollectionItem(
+                                    'hobbies',
+                                    false,
+                                    new ShapedCollectionType(
+                                        'array4',
+                                        [
+                                            new ShapedCollectionItem(
+                                                '0',
+                                                false,
+                                                new StringType()
+                                            ),
+                                            new ShapedCollectionItem(
+                                                '1',
+                                                true,
+                                                new UnionType(
+                                                    [
+                                                        new StringType(),
+                                                        new IntType()
+                                                    ]
+                                                )
+                                            )
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    )
+                ]
+            )
+        );
 
-        $this->assertEquals('array', $response->getTypeName());
-        $this->assertInstanceOf(ShapedCollectionType::class, $response->getSubType());
-
-        $subType = $response->getSubType();
-
-        assert($subType instanceof ShapedCollectionType);
-        $this->assertEquals('array1', $subType->getTypeName());
-        $this->assertIsArray($subType->getShapes());
-        $this->assertNotEmpty($subType->getShapes());
-        $this->assertCount(5, $subType->getShapes());
-
-
-        // FIRST SHAPE
-        $shape = $subType->getShapes()[0];
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('remco', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-        $this->assertInstanceOf(UnionType::class, $shape->getType());
-
-        $unionType = $shape->getType();
-        assert($unionType instanceof UnionType);
-
-        $this->assertIsArray($unionType->getTypes());
-        $this->assertCount(2, $unionType->getTypes());
-        $this->assertInstanceOf(StringType::class, $unionType->getTypes()[0]);
-        $this->assertInstanceOf(IntType::class, $unionType->getTypes()[1]);
-
-
-        // SECOND SHAPE
-        $shape = $subType->getShapes()[1];
-
-        $this->assertEquals('normal', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-        $this->assertInstanceOf(ShapedCollectionType::class, $shape->getType());
-        $this->assertEquals('array2', $shape->getType()->getTypeName());
-
-        // SECOND SHAPE NESTED 1
-        $subType = $shape->getType();
-
-        assert($subType instanceof ShapedCollectionType);
-
-        $this->assertIsArray($subType->getShapes());
-        $this->assertCount(2, $subType->getShapes());
-
-        $shape = $subType->getShapes()[0];
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('t', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-        $this->assertInstanceOf(StringType::class, $shape->getType());
-
-        $shape = $subType->getShapes()[1];
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('a', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-        $this->assertInstanceOf(ShapedCollectionType::class, $shape->getType());
-
-        $subType = $shape->getType();
-
-        assert($subType instanceof ShapedCollectionType);
-
-        $this->assertInstanceOf(ShapedCollectionType::class, $subType);
-        $this->assertEquals('array', $subType->getTypeName());
-        $this->assertIsArray($subType->getShapes());
-        $this->assertCount(2, $subType->getShapes());
-
-        $shape = $subType->getShapes()[0];
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('h', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-        $this->assertInstanceOf(StringType::class, $shape->getType());
-
-        $shape = $subType->getShapes()[1];
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('t', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-        $this->assertInstanceOf(MixedType::class, $shape->getType());
-
-        $subType = $response->getSubType();
-
-        assert($subType instanceof ShapedCollectionType);
-
-        $this->assertInstanceOf(ShapedCollectionType::class, $subType);
-
-        $shape = $subType->getShapes()[2];
-
-        $this->assertInstanceOf(StringType::class, $shape->getType());
-        $this->assertEquals('a', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-
-        $shape = $subType->getShapes()[3];
-
-        $this->assertInstanceOf(MixedType::class, $shape->getType());
-        $this->assertEquals('1', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-
-        $shape = $subType->getShapes()[4];
-
-        assert($shape instanceof ShapedCollectionItem);
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('array', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-
-        $this->assertInstanceOf(ShapedCollectionType::class, $shape->getType());
-        $this->assertEquals('array3', $shape->getType()->getTypeName());
-
-        $subType = $shape->getType();
-
-        assert($subType instanceof ShapedCollectionType);
-
-        $this->assertCount(3, $subType->getShapes());
-
-        $shape = $subType->getShapes()[0];
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('age', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-        $this->assertInstanceOf(IntType::class, $shape->getType());
-
-        $shape = $subType->getShapes()[1];
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('name', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-        $this->assertInstanceOf(StringType::class, $shape->getType());
-
-
-        $shape = $subType->getShapes()[2];
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('hobbies', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-        $this->assertInstanceOf(ShapedCollectionType::class, $shape->getType());
-
-        $subType = $shape->getType();
-
-        assert($subType instanceof ShapedCollectionType);
-
-        $this->assertEquals('array4', $subType->getTypeName());
-        $this->assertCount(2, $subType->getShapes());
-        $this->assertIsArray($subType->getShapes());
-
-
-        $shape = $subType->getShapes()[0];
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('0', $shape->getKey());
-        $this->assertFalse($shape->isOptional());
-        $this->assertInstanceOf(StringType::class, $shape->getType());
-
-        $shape = $subType->getShapes()[1];
-
-        $this->assertInstanceOf(ShapedCollectionItem::class, $shape);
-        $this->assertEquals('1', $shape->getKey());
-        $this->assertTrue($shape->isOptional());
-        $this->assertInstanceOf(UnionType::class, $shape->getType());
-
-        $unionType = $shape->getType();
-
-        assert($unionType instanceof UnionType);
-
-        $this->assertIsArray($unionType->getTypes());
-        $this->assertCount(2, $unionType->getTypes());
-        $this->assertInstanceOf(StringType::class, $unionType->getTypes()[0]);
-        $this->assertInstanceOf(IntType::class, $unionType->getTypes()[1]);
+        $this->assertEquals($response, $type);
     }
 
     /**
@@ -206,29 +138,41 @@ class DocblockParserTest extends TestCase
     public function testItCanParseUnionWithArray(): void
     {
         $typeString = 'string|null|mixed[]|Collection<string>|array<string>|array<int, string>|array<int, (string|int)>|array<int, array{remco: string|int, testing: string|int, a: string, 1: mixed, 1: mixed, array: array{age: int, name: string, hobbies: array{0: string, 1: string}}}>';
-        //        $typeString = 'array1<int, array2{remco: string|int, normal: array3{t: string, a: array{remco: string, smits: string}}, a: string, geen: array{groen: int, aarde: string}}>';
-//        $typeString = 'array1<int, array2{1: array3{2: array{remco: string, smits: string}}, a: string, geen: array{aarde: string}}>';
 
         $response = TypeParser::parse($typeString);
 
-        $this->assertInstanceOf(UnionType::class, $response);
+        $type = new UnionType([
+            new StringType(),
+            new NullType(),
+            new CollectionType(
+                'array',
+                [new IntType(), new StringType()],
+                new MixedType()
+            ),
+            new CollectionType(
+                'Collection',
+                [new IntType(), new StringType()],
+                new StringType()
+            ),
+            new CollectionType(
+                'array',
+                [new IntType(), new StringType()],
+                new StringType()
+            ),
+            new CollectionType(
+                'array',
+                [new IntType()],
+                new StringType()
+            ),
+            new CollectionType(
+                'array',
+                [new IntType()],
+                new UnionType(
+                    [new StringType(), new IntType()]
+                )
+            )
+        ]);
 
-        assert($response instanceof UnionType);
-
-        $types = $response->getTypes();
-
-        $this->assertInstanceOf(StringType::class, $types[0]);
-        $this->assertInstanceOf(NullType::class, $types[1]);
-
-        $this->assertInstanceOf(CollectionType::class, $types[2]);
-        assert($types[2] instanceof CollectionType);
-        $this->assertInstanceOf(MixedType::class, $types[2]->getSubType());
-
-        $this->assertCount(2, $types[2]->getCollectionKeyTypes());
-        $this->assertIsArray($types[2]->getCollectionKeyTypes());
-        $this->assertInstanceOf(IntType::class, $types[2]->getCollectionKeyTypes()[0]);
-        $this->assertInstanceOf(StringType::class, $types[2]->getCollectionKeyTypes()[1]);
-
-        dd($types[3]);
+        $this->assertEquals($response, $type);
     }
 }
