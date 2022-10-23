@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace RemcoSmits\Hydrate\Docblock\Types;
 
 final class UnionType extends AbstractType

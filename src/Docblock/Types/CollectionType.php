@@ -13,7 +13,7 @@ final class CollectionType extends AbstractType
 
     private ?AbstractType $subType;
 
-    /** @param array<int, StringType|IntType> $collectionKeyTypes */
+    /** @param array<int, StringType|IntType|UnionType> $collectionKeyTypes */
     public function __construct(string $collectionTypeName, array $collectionKeyTypes, ?AbstractType $subType = null)
     {
         $this->collectionKeyTypes = $collectionKeyTypes;

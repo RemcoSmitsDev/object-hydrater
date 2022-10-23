@@ -137,7 +137,7 @@ class DocblockParserTest extends TestCase
      */
     public function testItCanParseUnionWithArray(): void
     {
-        $typeString = 'string|null|mixed[]|Collection<string>|array<string>|array<int, string>|array<int, (string|int)>|array<int, array{remco: string|int, testing: string|int, a: string, 1: mixed, 1: mixed, array: array{age: int, name: string, hobbies: array{0: string, 1: string}}}>';
+        $typeString = 'string|null|mixed[]|Collection<string>|array<string>|array<int, string>|array<int, string|int>|array<int, array{remco: string|int, testing: string|int, a: string, 1: mixed, array: array{age: int, name: string, hobbies: array{0: string, 1: string}}}>';
 
         $response = TypeParser::parse($typeString);
 
@@ -169,6 +169,79 @@ class DocblockParserTest extends TestCase
                 [new IntType()],
                 new UnionType(
                     [new StringType(), new IntType()]
+                )
+            ),
+            new CollectionType(
+                'array',
+                [new IntType()],
+                new ShapedCollectionType(
+                    'array',
+                    [
+                        new ShapedCollectionItem(
+                            'remco',
+                            false,
+                            new UnionType([
+                                new StringType(),
+                                new IntType()
+                            ])
+                        ),
+                        new ShapedCollectionItem(
+                            'testing',
+                            false,
+                            new UnionType([
+                                new StringType(),
+                                new IntType()
+                            ])
+                        ),
+                        new ShapedCollectionItem(
+                            'a',
+                            false,
+                            new StringType()
+                        ),
+                        new ShapedCollectionItem(
+                            '1',
+                            false,
+                            new MixedType(),
+                        ),
+                        new ShapedCollectionItem(
+                            'array',
+                            false,
+                            new ShapedCollectionType(
+                                'array',
+                                [
+                                    new ShapedCollectionItem(
+                                        'age',
+                                        false,
+                                        new IntType()
+                                    ),
+                                    new ShapedCollectionItem(
+                                        'name',
+                                        false,
+                                        new StringType(),
+                                    ),
+                                    new ShapedCollectionItem(
+                                        'hobbies',
+                                        false,
+                                        new ShapedCollectionType(
+                                            'array',
+                                            [
+                                                new ShapedCollectionItem(
+                                                    '0',
+                                                    false,
+                                                    new StringType(),
+                                                ),
+                                                new ShapedCollectionItem(
+                                                    '1',
+                                                    false,
+                                                    new StringType(),
+                                                )
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                        )
+                    ]
                 )
             )
         ]);

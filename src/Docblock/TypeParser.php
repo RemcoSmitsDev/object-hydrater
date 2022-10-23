@@ -221,6 +221,10 @@ final class TypeParser
             $currentType .= $match;
         }
 
+        if (empty($currentType) === false) {
+            $types[] = self::parse($currentType);
+        }
+
         return $types;
     }
 
