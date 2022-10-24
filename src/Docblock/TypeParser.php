@@ -17,6 +17,8 @@ use Throwable;
 
 final class TypeParser
 {
+    private static array $types = [];
+
     /**
      * @throws FailedToMapTypeException
      * @throws FailedToParseDocblockToTypeException
@@ -37,6 +39,10 @@ final class TypeParser
 
         if ($hasUnionType) {
             return new UnionType(self::splitToMultipleTypes($type));
+        }
+
+        if (preg_match('/^---child-collection-(\d+)---$/', $type) !== 0) {
+            return self::formatShapedArrayType();
         }
 
         return TypeParserUtil::mapStringToType($type);
@@ -77,9 +83,9 @@ final class TypeParser
 
         // array<int, array{remco: string|int, testing: string|int}> or array{remco: string|int, testing: string|int}
         try {
-            $types = self::splitNestedCollectionTypes($collectionType);
+            self::$types = self::splitNestedCollectionTypes($collectionType);
 
-            return self::formatShapedArrayType($types);
+            return self::formatShapedArrayType();
         } catch (Throwable $throwable) {
             throw new FailedToParseDocblockToTypeException(
                 sprintf('Failed to parse [%s]', $collectionType)
@@ -147,18 +153,17 @@ final class TypeParser
     }
 
     /**
-     * @param array<int, string> $types
      * @return AbstractType
      *
      * @throws FailedToMapTypeException
      * @throws FailedToParseDocblockToTypeException
      */
-    private static function formatShapedArrayType(array &$types): AbstractType
+    private static function formatShapedArrayType(): AbstractType
     {
-        $regex1 = '/([A-z0-9\.\-]+)(\?*)\:\s(?:([A-z\|]+)|---child-collection-(\d+)---)/';
+        $regex1 = '/([A-z0-9\.\-]+)(\?*)\:\s((?:([A-z\|]+)|---child-collection-(\d+)---)+)/';
         $regex2 = '/([A-z\|]+)\,\s((?:([A-z\|]+)|---child-collection-(\d+)---)+)/';
 
-        $currentType = array_shift($types);
+        $currentType = array_shift(self::$types);
 
         if (preg_match_all($regex1, $currentType, $match, PREG_UNMATCHED_AS_NULL) !== 0) {
             $collectionClass = new ShapedCollectionType(
@@ -166,21 +171,13 @@ final class TypeParser
             );
 
             foreach ($match[1] as $_key => $arrayKey) {
-                $isOptional = $match[2][$_key] === '?';
-
-                if (is_numeric($match[4][$_key])) {
-                    $collectionClass->appendShape(
-                        new ShapedCollectionItem(
-                            $arrayKey,
-                            $isOptional,
-                            self::formatShapedArrayType($types)
-                        )
-                    );
-                } else {
-                    $collectionClass->appendShape(
-                        new ShapedCollectionItem($arrayKey, $isOptional, self::parse($match[3][$_key]))
-                    );
-                }
+                $collectionClass->appendShape(
+                    new ShapedCollectionItem(
+                        $arrayKey,
+                        $match[2][$_key] === '?',
+                        self::parse($match[3][$_key])
+                    )
+                );
             }
 
             return $collectionClass;
@@ -192,22 +189,7 @@ final class TypeParser
                 self::splitToUnionTypeIfIsUnion($match[1])
             );
 
-            if (is_numeric($match[4]) && strpos($match[2], '|') !== false) {
-                $un = new UnionType(
-                    array_map(
-                        static fn(string $type) => strpos($type, '--') !== false ? self::formatShapedArrayType(
-                            $types
-                        ) : self::parse($type),
-                        explode('|', $match[2])
-                    )
-                );
-
-                return $collectionClass->setSubType($un);
-            }
-
-            $collectionClass->setSubType(
-                is_numeric($match[4]) ? self::formatShapedArrayType($types) : self::parse($match[2])
-            );
+            $collectionClass->setSubType(self::parse($match[2]));
 
             return $collectionClass;
         }
