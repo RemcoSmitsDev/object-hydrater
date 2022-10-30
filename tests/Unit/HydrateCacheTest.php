@@ -6,6 +6,7 @@ namespace RemcoSmits\Hydrate\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use RemcoSmits\Hydrate\Cache\HydraterCache;
+use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\Exception\AbstractHydrateException;
 use RemcoSmits\Hydrate\Exception\ClassDoesntExistsException;
 use RemcoSmits\Hydrate\Exception\HydrateFailedException;
@@ -19,11 +20,12 @@ use RemcoSmits\Hydrate\Tests\Unit\TestClasses\TestClass;
 class HydrateCacheTest extends TestCase
 {
     /**
-     * @throws ClassDoesntExistsException
      * @throws AbstractHydrateException
+     * @throws ClassDoesntExistsException
+     * @throws FailedToParseDocblockToTypeException
      * @throws HydrateFailedException
-     * @throws ValueWasNotFoundException
      * @throws InvalidDataTypeException
+     * @throws ValueWasNotFoundException
      */
     public function testItCanFindHydrateReflectionClass(): void
     {
@@ -53,11 +55,12 @@ class HydrateCacheTest extends TestCase
     }
 
     /**
-     * @throws ClassDoesntExistsException
      * @throws AbstractHydrateException
+     * @throws ClassDoesntExistsException
      * @throws HydrateFailedException
-     * @throws ValueWasNotFoundException
      * @throws InvalidDataTypeException
+     * @throws ValueWasNotFoundException
+     * @throws FailedToParseDocblockToTypeException
      */
     public function testItCanDeleteHydrateCacheItem(): void
     {
@@ -109,9 +112,7 @@ class HydrateCacheTest extends TestCase
         $this->assertInstanceOf(HydrateReflectionClass::class, HydraterCache::get(TestClass::class));
         $this->assertInstanceOf(HydrateReflectionClass::class, HydraterCache::get(SubClass::class));
 
-        $filename = sprintf('%s/%s%s', realpath(HydraterCache::CACHE_FOLDER), base64_encode(TestClass::class), '.json');
-
-        file_put_contents($filename, 'invalid_serialized_content');
+        file_put_contents(HydraterCache::formatToFileName(TestClass::class), 'invalid_serialized_content');
 
         $this->assertTrue(HydraterCache::has(TestClass::class));
         $this->assertTrue(HydraterCache::has(SubClass::class));
@@ -122,9 +123,10 @@ class HydrateCacheTest extends TestCase
     /**
      * @throws AbstractHydrateException
      * @throws ClassDoesntExistsException
+     * @throws FailedToParseDocblockToTypeException
      * @throws HydrateFailedException
-     * @throws ValueWasNotFoundException
      * @throws InvalidDataTypeException
+     * @throws ValueWasNotFoundException
      */
     public function testItCannotReadClassThatIsNotHydrateReflectionClass(): void
     {
@@ -146,9 +148,7 @@ class HydrateCacheTest extends TestCase
             'array_iterator_strings' => [2, 'remco']
         ]);
 
-        $filename = sprintf('%s/%s%s', realpath(HydraterCache::CACHE_FOLDER), base64_encode(TestClass::class), '.json');
-
-        file_put_contents($filename, serialize(new TestClass()));
+        file_put_contents(HydraterCache::formatToFileName(TestClass::class), serialize(new TestClass()));
 
         $this->assertNull(HydraterCache::get(TestClass::class));
     }

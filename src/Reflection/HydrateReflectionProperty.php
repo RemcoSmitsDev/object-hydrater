@@ -31,7 +31,7 @@ final class HydrateReflectionProperty
 
     /**
      * @throws ReflectionException
-     * @throws \RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException
+     * @throws FailedToParseDocblockToTypeException
      */
     public function __construct(ReflectionProperty $property)
     {
@@ -56,7 +56,7 @@ final class HydrateReflectionProperty
 
     /**
      * @throws ReflectionException
-     * @throws \RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException
+     * @throws FailedToParseDocblockToTypeException
      */
     public function getPropertyType(): PropertyType
     {
@@ -82,11 +82,7 @@ final class HydrateReflectionProperty
             $type->setAllowNull($this->getType()->allowsNull());
         }
 
-        if ($type === null) {
-            $type = new PropertyType('mixed', 'mixed');
-        }
-
-        return $type;
+        return $type ?? new PropertyType('mixed', 'mixed');
     }
 
     public function getName(): string
@@ -129,7 +125,7 @@ final class HydrateReflectionProperty
     /** @throws ReflectionException */
     public function getProperty(): ReflectionProperty
     {
-        return $this->property = $this->property ?? new ReflectionProperty($this->declaringClass, $this->getName());
+        return $this->property ??= new ReflectionProperty($this->declaringClass, $this->getName());
     }
 
     /** @throws ReflectionException */

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace RemcoSmits\Hydrate\Docblock\Types\ShapedCollection;
+namespace RemcoSmits\Hydrate\Docblock\Type\ShapedCollection;
 
-use RemcoSmits\Hydrate\Docblock\Types\AbstractType;
+use RemcoSmits\Hydrate\Docblock\Type\AbstractType;
 
 final class ShapedCollectionItem
 {

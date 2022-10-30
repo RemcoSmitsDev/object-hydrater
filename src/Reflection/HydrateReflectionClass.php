@@ -7,6 +7,7 @@ namespace RemcoSmits\Hydrate\Reflection;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
+use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
 
 final class HydrateReflectionClass
 {
@@ -20,6 +21,7 @@ final class HydrateReflectionClass
     /**
      * @param class-string $class
      * @throws ReflectionException
+     * @throws FailedToParseDocblockToTypeException
      */
     public function __construct(string $class)
     {

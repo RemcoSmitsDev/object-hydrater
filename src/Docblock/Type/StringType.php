@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace RemcoSmits\Hydrate\Docblock\Types;
+namespace RemcoSmits\Hydrate\Docblock\Type;
 
-final class IntType extends AbstractType
+final class StringType extends AbstractType
 {
     public function getTypeName(): string
     {
-        return 'int';
+        return 'string';
     }
 
     public function isCollectionType(): bool

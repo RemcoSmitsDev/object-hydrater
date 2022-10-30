@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace RemcoSmits\Hydrate\Docblock\Types;
+namespace RemcoSmits\Hydrate\Docblock\Type;
 
 abstract class AbstractType
 {

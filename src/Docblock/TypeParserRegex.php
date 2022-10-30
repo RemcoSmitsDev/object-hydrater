@@ -10,8 +10,8 @@ final class TypeParserRegex
 {
     public const COLLECTION_TYPES_REGEX = [
         '/^(?<collectionItemTypeName>[A-z]+)\[\]$/',
-        '/^(?<collectionTypeName>[A-z]+)\<(?<collectionItemTypeName>[A-z]+)\>$/',
-        '/^(?<collectionTypeName>[A-z]+)\<(?<collectionKeyTypes>[A-z\|]+),\s*(?<collectionItemTypeName>[A-z\|]+)\>$/'
+        '/^(?<collectionTypeName>[A-z\-]+)\<(?<collectionItemTypeName>[A-z]+)\>$/',
+        '/^(?<collectionTypeName>[A-z\-]+)\<(?<collectionKeyTypes>[A-z\|]+),\s*(?<collectionItemTypeName>[A-z\|]+)\>$/'
     ];
 
     public const TYPE_REGEX = [
@@ -62,7 +62,7 @@ final class TypeParserRegex
         );
     }
 
-    /** @throws \RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException */
+    /** @throws FailedToParseDocblockToTypeException */
     public static function matchAll(string $typeString): array
     {
         preg_match_all(self::generateRegexp(), $typeString, $matches);

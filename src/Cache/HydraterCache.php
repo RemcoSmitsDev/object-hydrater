@@ -64,8 +64,13 @@ final class HydraterCache
     }
 
     /** @param class-string $class */
-    private static function formatToFileName(string $class): string
+    public static function formatToFileName(string $class): string
     {
-        return sprintf('%s/%s%s', realpath(self::CACHE_FOLDER), base64_encode($class), '.json');
+        return sprintf(
+            '%s/%s%s',
+            realpath(self::CACHE_FOLDER),
+            str_replace('\\', '', $class),
+            '.json'
+        );
     }
 }

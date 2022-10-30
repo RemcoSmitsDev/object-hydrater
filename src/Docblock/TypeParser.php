@@ -6,13 +6,13 @@ namespace RemcoSmits\Hydrate\Docblock;
 
 use RemcoSmits\Hydrate\Docblock\Exception\FailedToMapTypeException;
 use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
-use RemcoSmits\Hydrate\Docblock\Types\AbstractType;
-use RemcoSmits\Hydrate\Docblock\Types\CollectionType;
-use RemcoSmits\Hydrate\Docblock\Types\IntType;
-use RemcoSmits\Hydrate\Docblock\Types\ShapedCollection\ShapedCollectionItem;
-use RemcoSmits\Hydrate\Docblock\Types\ShapedCollectionType;
-use RemcoSmits\Hydrate\Docblock\Types\StringType;
-use RemcoSmits\Hydrate\Docblock\Types\UnionType;
+use RemcoSmits\Hydrate\Docblock\Type\AbstractType;
+use RemcoSmits\Hydrate\Docblock\Type\CollectionType;
+use RemcoSmits\Hydrate\Docblock\Type\IntType;
+use RemcoSmits\Hydrate\Docblock\Type\ShapedCollection\ShapedCollectionItem;
+use RemcoSmits\Hydrate\Docblock\Type\ShapedCollectionType;
+use RemcoSmits\Hydrate\Docblock\Type\StringType;
+use RemcoSmits\Hydrate\Docblock\Type\UnionType;
 use Throwable;
 
 final class TypeParser
@@ -41,7 +41,7 @@ final class TypeParser
             return new UnionType(self::splitToMultipleTypes($type));
         }
 
-        if (preg_match('/^---child-collection-(\d+)---$/', $type) !== 0) {
+        if (preg_match('/^---child-collection-(\d+)---$/', $type) === 1) {
             return self::formatShapedArrayType();
         }
 
@@ -160,8 +160,8 @@ final class TypeParser
      */
     private static function formatShapedArrayType(): AbstractType
     {
-        $regex1 = '/([A-z0-9\.\-]+)(\?*)\:\s((?:([A-z\|]+)|---child-collection-(\d+)---)+)/';
-        $regex2 = '/([A-z\|]+)\,\s((?:([A-z\|]+)|---child-collection-(\d+)---)+)/';
+        $regex1 = '/([A-z0-9\.\-]+)(\?*)\:\s((?:([A-z\-\|]+)|---child-collection-(\d+)---)+)/';
+        $regex2 = '/([A-z\|]+)\,\s((?:([A-z\-\|]+)|---child-collection-(\d+)---)+)/';
 
         $currentType = array_shift(self::$types);
 

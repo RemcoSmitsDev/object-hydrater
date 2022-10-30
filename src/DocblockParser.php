@@ -23,7 +23,7 @@ final class DocblockParser
         '@var\s+([A-z]+)\<[A-z]+,\s+([A-z]+)\>',
     ];
 
-    /** @throws \RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException */
+    /** @throws FailedToParseDocblockToTypeException */
     public static function getType(string $docblock): PropertyType
     {
         try {
@@ -57,7 +57,7 @@ final class DocblockParser
     /**
      * @return array<int, string>
      *
-     * @throws \RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException
+     * @throws FailedToParseDocblockToTypeException
      */
     private static function parseDocblock(string $regex, string $docblock): array
     {

@@ -6,6 +6,7 @@ namespace RemcoSmits\Hydrate;
 
 use ReflectionException;
 use RemcoSmits\Hydrate\Cache\HydraterCache;
+use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
 use RemcoSmits\Hydrate\Exception\AbstractHydrateException;
 use RemcoSmits\Hydrate\Exception\ClassDoesntExistsException;
 use RemcoSmits\Hydrate\Exception\HydrateFailedException;
@@ -23,11 +24,12 @@ final class Hydrater
      *
      * @return TValue
      *
-     * @throws ClassDoesntExistsException
      * @throws AbstractHydrateException
+     * @throws ClassDoesntExistsException
+     * @throws FailedToParseDocblockToTypeException
+     * @throws HydrateFailedException
      * @throws InvalidDataTypeException
      * @throws ValueWasNotFoundException
-     * @throws HydrateFailedException
      */
     public static function to(string $class, array $data): object
     {
@@ -42,7 +44,10 @@ final class Hydrater
         return HydrateClassReflector::from($class, $reflectionClass, $data);
     }
 
-    /** @throws ReflectionException */
+    /**
+     * @throws ReflectionException
+     * @throws FailedToParseDocblockToTypeException
+     */
     private static function getHydrateReflectionClass(string $class): HydrateReflectionClass
     {
         if (HydraterCache::has($class) === false) {

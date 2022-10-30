@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace RemcoSmits\Hydrate\Docblock;
 
 use RemcoSmits\Hydrate\Docblock\Exception\FailedToMapTypeException;
-use RemcoSmits\Hydrate\Docblock\Types\AbstractType;
-use RemcoSmits\Hydrate\Docblock\Types\IntType;
-use RemcoSmits\Hydrate\Docblock\Types\MixedType;
-use RemcoSmits\Hydrate\Docblock\Types\NullType;
-use RemcoSmits\Hydrate\Docblock\Types\ScalarType;
-use RemcoSmits\Hydrate\Docblock\Types\StringType;
+use RemcoSmits\Hydrate\Docblock\Type\AbstractType;
+use RemcoSmits\Hydrate\Docblock\Type\IntType;
+use RemcoSmits\Hydrate\Docblock\Type\MixedType;
+use RemcoSmits\Hydrate\Docblock\Type\NullType;
+use RemcoSmits\Hydrate\Docblock\Type\ObjectType;
+use RemcoSmits\Hydrate\Docblock\Type\ScalarType;
+use RemcoSmits\Hydrate\Docblock\Type\StringType;
 
 final class TypeParserUtil
 {
@@ -19,9 +20,7 @@ final class TypeParserUtil
         return str_replace(
             ['(', ')', '\'', '"'],
             '',
-            trim(
-                self::changeIntersectTypeToUnion($typeString)
-            )
+            trim(self::changeIntersectTypeToUnion($typeString))
         );
     }
 
@@ -45,6 +44,7 @@ final class TypeParserUtil
     {
         switch ($type) {
             case 'string':
+            case 'class-string':
                 return new StringType();
             case 'null':
                 return new NullType();
@@ -55,6 +55,8 @@ final class TypeParserUtil
                 return new MixedType();
             case 'scalar':
                 return new ScalarType();
+            case 'object':
+                return new ObjectType();
             default:
                 throw new FailedToMapTypeException($type);
         }

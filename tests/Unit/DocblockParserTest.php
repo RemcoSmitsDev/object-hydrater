@@ -7,15 +7,15 @@ namespace RemcoSmits\Hydrate\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use RemcoSmits\Hydrate\Docblock\Exception\FailedToMapTypeException;
 use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
+use RemcoSmits\Hydrate\Docblock\Type\CollectionType;
+use RemcoSmits\Hydrate\Docblock\Type\IntType;
+use RemcoSmits\Hydrate\Docblock\Type\MixedType;
+use RemcoSmits\Hydrate\Docblock\Type\NullType;
+use RemcoSmits\Hydrate\Docblock\Type\ShapedCollection\ShapedCollectionItem;
+use RemcoSmits\Hydrate\Docblock\Type\ShapedCollectionType;
+use RemcoSmits\Hydrate\Docblock\Type\StringType;
+use RemcoSmits\Hydrate\Docblock\Type\UnionType;
 use RemcoSmits\Hydrate\Docblock\TypeParser;
-use RemcoSmits\Hydrate\Docblock\Types\CollectionType;
-use RemcoSmits\Hydrate\Docblock\Types\IntType;
-use RemcoSmits\Hydrate\Docblock\Types\MixedType;
-use RemcoSmits\Hydrate\Docblock\Types\NullType;
-use RemcoSmits\Hydrate\Docblock\Types\ShapedCollection\ShapedCollectionItem;
-use RemcoSmits\Hydrate\Docblock\Types\ShapedCollectionType;
-use RemcoSmits\Hydrate\Docblock\Types\StringType;
-use RemcoSmits\Hydrate\Docblock\Types\UnionType;
 
 class DocblockParserTest extends TestCase
 {
@@ -273,4 +273,64 @@ class DocblockParserTest extends TestCase
 
         $this->assertEquals($type, $response);
     }
+
+    public function testClassString(): void
+    {
+//        dd('failed');
+        $response = TypeParser::parse('array<string, string|class-string>');
+
+        dd('response: ', $response);
+    }
+
+//    /**
+//     * @throws FailedToParseDocblockToTypeException
+//     */
+//    public function testSplitShapedCollection(): void
+//    {
+//        $t = 'array<int, array1{remco: string|int, normal: array2{t: string, a: array<string>}, a: string, 1: mixed, array: array3{age: int, name: string, hobbies: array4{0: string, 1?: string|int}}}>';
+//
+//        $array = [
+//            'array<int, ---child-collection-1--->',
+//            'array1{remco: string|int, normal: ---child-collection-2---, a: string, 1: mixed, array: ---child-collection-4---}',
+//            'array2{t: string, a: ---child-collection-3---}',
+//            'array<string>',
+//            'array3{age: int, name: string, hobbies: ---child-collection-5---}',
+//            'array4{0: string, 1?: string|int}'
+//        ];
+//
+//        $types = [];
+//        $index = 0;
+//        $indexes = [];
+//
+//        foreach ($matches = TypeParserRegex::matchAll($t) as $part) {
+//            $nextPart = next($matches);
+//
+//            if ($nextPart === '<' || $nextPart === '{') {
+//                $types[] = $part;
+//
+//                ++$index;
+//            }
+//
+//            if ($part === '<' || $part === '{') {
+//                $indexes[] = $index;
+//                $types[$index - 1] .= $part;
+//            }
+//
+//            if ($nextPart === '>' || $nextPart === '}') {
+////                dump($types, $index, $indexes);
+//            }
+//
+//            if ($part === '>' || $part === '}') {
+//                --$index;
+//
+//                $types[$index] .= $part;
+//            }
+//        }
+//
+//        dd($types, $indexes);
+//
+//        $this->assertEquals(0, $index);
+//
+//        $this->assertEquals($array, $types);
+//    }
 }

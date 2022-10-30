@@ -33,6 +33,7 @@
   ],
   "require": {
     "phpdocumentor/type-resolver": "^1.6",
-    "ext-json": "*"
+    "ext-json": "*",
+    "php": "^7.4 | ^8.0 | ^8.1"
   }
 }
