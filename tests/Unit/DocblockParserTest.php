@@ -7,6 +7,7 @@ namespace RemcoSmits\Hydrate\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use RemcoSmits\Hydrate\Docblock\Exception\FailedToMapTypeException;
 use RemcoSmits\Hydrate\Docblock\Exception\FailedToParseDocblockToTypeException;
+use RemcoSmits\Hydrate\Docblock\Type\ClassStringType;
 use RemcoSmits\Hydrate\Docblock\Type\CollectionType;
 use RemcoSmits\Hydrate\Docblock\Type\IntType;
 use RemcoSmits\Hydrate\Docblock\Type\MixedType;
@@ -276,10 +277,32 @@ class DocblockParserTest extends TestCase
 
     public function testClassString(): void
     {
-//        dd('failed');
-        $response = TypeParser::parse('array<string, string|class-string>');
+//        $response = TypeParser::parse('array{name: string, age: int}');
+//
+//        dd($response);
 
-        dd('response: ', $response);
+        $response = TypeParser::parse(
+            'array<string|int|class-string<Smits>, array<string, mixed>>'
+        );
+
+        $type = new CollectionType(
+            'array',
+            new UnionType(
+                [
+                    new StringType(),
+                    new IntType(),
+                    new ClassStringType('Smits')
+                ]
+            ),
+            new CollectionType(
+                'array',
+                new StringType(),
+                new MixedType()
+            )
+        );
+
+        $this->assertEquals($type, $response);
+//        dd('response: ', $response);
     }
 
 //    /**

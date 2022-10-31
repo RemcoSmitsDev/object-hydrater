@@ -9,6 +9,15 @@ use RemcoSmits\Hydrate\Docblock\Type\AbstractType;
 
 abstract class AbstractParser
 {
-    /** @throws InvalidTypeFormatException */
-    abstract public function parse(string $typeString): AbstractType;
+    /**
+     * Return the regex format that the type supports
+     */
+    abstract public function matchFormat(): string;
+
+    /**
+     * @param array<string|int, string|null> $matches
+     *
+     * @throws InvalidTypeFormatException
+     */
+    abstract public function parse(string $typeString, array $matches): AbstractType;
 }

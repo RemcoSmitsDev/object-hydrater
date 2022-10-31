@@ -44,7 +44,6 @@ final class TypeParserUtil
     {
         switch ($type) {
             case 'string':
-            case 'class-string':
                 return new StringType();
             case 'null':
                 return new NullType();
@@ -58,6 +57,13 @@ final class TypeParserUtil
             case 'object':
                 return new ObjectType();
             default:
+                if (empty($type) === false && $type[0] === strtoupper($type[0]) && strpos(
+                        $type,
+                        '|'
+                    ) === false && strpos($type, '--') === false) {
+                    return new ObjectType();
+                }
+
                 throw new FailedToMapTypeException($type);
         }
     }

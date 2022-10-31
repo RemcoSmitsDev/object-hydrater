@@ -10,12 +10,18 @@ use RemcoSmits\Hydrate\Docblock\Type\ClassStringType;
 
 final class ClassStringParser extends AbstractParser
 {
-    public function parse(string $typeString): AbstractType
+    /** @inheritDoc */
+    public function parse(string $typeString, array $matches): AbstractType
     {
-        if (random_int(1, 2) === 1) {
+        if (empty($matches)) {
             throw new InvalidTypeFormatException();
         }
 
-        return new ClassStringType();
+        return new ClassStringType($matches['classStringOfObject'] ?? null);
+    }
+
+    public function matchFormat(): string
+    {
+        return '/^class-string(?:\<(?<classStringOfObject>[A-z]+)\>)*$/';
     }
 }

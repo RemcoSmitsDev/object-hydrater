@@ -6,11 +6,11 @@ namespace RemcoSmits\Hydrate\Docblock\Type;
 
 final class ClassStringType extends AbstractType
 {
-    private ?string $type;
+    private ?string $classStringOfObject;
 
-    public function __construct(?string $type = null)
+    public function __construct(?string $classStringOfObject = null)
     {
-        $this->type = $type;
+        $this->classStringOfObject = $classStringOfObject;
     }
 
     public function getTypeName(): string
@@ -23,8 +23,8 @@ final class ClassStringType extends AbstractType
         return false;
     }
 
-    public function getType(): ?string
+    public function getClassStringOfObject(): ?string
     {
-        return $this->type;
+        return $this->classStringOfObject;
     }
 }
